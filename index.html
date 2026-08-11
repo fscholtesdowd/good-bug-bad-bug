@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Good Bug or Bad Bug? — Garden Insect Checker</title>
+<meta name="description" content="Fast, free checker: is that bug in your garden a friend or a pest? Plain-language ID cues and organic-first advice for 29 common garden insects.">
+<style>
+  :root{
+    --bg:#f6f8f2; --card:#ffffff; --ink:#25301f; --muted:#5c6b51;
+    --line:#dbe3d0; --accent:#3d7a3a; --accent-ink:#ffffff;
+    --good:#2e7d32; --good-bg:#e6f2e6;
+    --bad:#b3402a; --bad-bg:#f9e8e3;
+    --dep:#8a6d1a; --dep-bg:#f7f0d8;
+    --shadow:0 1px 3px rgba(30,40,20,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#171c13; --card:#212819; --ink:#e8eddf; --muted:#a8b499;
+      --line:#37402c; --accent:#7fbf6a; --accent-ink:#14200f;
+      --good:#8fd08a; --good-bg:#233721;
+      --bad:#f0a08c; --bad-bg:#3a241d;
+      --dep:#e0c46a; --dep-bg:#37301a;
+      --shadow:none;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;padding-bottom:4rem}
+  .wrap{max-width:880px;margin:0 auto;padding:0 1rem}
+  header{padding:2.2rem 0 1.2rem;text-align:center}
+  header h1{font-size:1.9rem;line-height:1.2}
+  header p.sub{color:var(--muted);margin-top:.5rem;max-width:34rem;margin-left:auto;margin-right:auto}
+  .modes{display:flex;justify-content:center;gap:.5rem;margin:1.1rem 0 .4rem}
+  .modes button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:.5rem 1.1rem;border-radius:999px;font-size:.95rem;cursor:pointer}
+  .modes button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+  .controls{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:.8rem 0 1.2rem}
+  .controls input{flex:1 1 220px;max-width:340px;padding:.55rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:1rem}
+  .filters{display:flex;gap:.4rem}
+  .filters button{border:1px solid var(--line);background:var(--card);color:var(--muted);padding:.45rem .8rem;border-radius:8px;cursor:pointer;font-size:.9rem}
+  .filters button.on{color:var(--ink);border-color:var(--accent);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.8rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.9rem 1rem;box-shadow:var(--shadow)}
+  .card h3{font-size:1.05rem;display:flex;align-items:center;gap:.45rem}
+  .card h3 .em{font-size:1.3rem}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.03em;padding:.15rem .55rem;border-radius:999px;margin:.4rem 0 .5rem;text-transform:uppercase}
+  .tag.good{color:var(--good);background:var(--good-bg)}
+  .tag.bad{color:var(--bad);background:var(--bad-bg)}
+  .tag.dep{color:var(--dep);background:var(--dep-bg)}
+  .card p{font-size:.9rem;margin-top:.3rem}
+  .card p b{color:var(--muted);font-weight:600}
+  .empty{text-align:center;color:var(--muted);padding:2rem 0}
+  /* quiz */
+  #quiz{max-width:480px;margin:0 auto;text-align:center;display:none}
+  #quiz .qcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.6rem 1.2rem;box-shadow:var(--shadow)}
+  #quiz .em{font-size:3rem}
+  #quiz h3{font-size:1.3rem;margin:.4rem 0 .3rem}
+  #quiz p.clue{color:var(--muted);font-size:.95rem;min-height:3em}
+  .qbtns{display:flex;gap:.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+  .qbtns button{padding:.6rem 1.2rem;border-radius:10px;border:1px solid var(--line);cursor:pointer;font-size:1rem;font-weight:600;background:var(--card);color:var(--ink)}
+  .qbtns button.g{border-color:var(--good);color:var(--good)}
+  .qbtns button.b{border-color:var(--bad);color:var(--bad)}
+  .qbtns button.d{border-color:var(--dep);color:var(--dep)}
+  #verdict{margin-top:1rem;font-size:.95rem;min-height:4.5em}
+  #verdict .right{color:var(--good);font-weight:700}
+  #verdict .wrong{color:var(--bad);font-weight:700}
+  #score{color:var(--muted);font-size:.9rem;margin-top:.6rem}
+  #nextq{margin-top:.8rem;display:none;background:var(--accent);color:var(--accent-ink);border:none;padding:.55rem 1.4rem;border-radius:10px;font-size:1rem;cursor:pointer}
+  .linkbox{margin:2rem auto 0;max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;text-align:center}
+  .linkbox a{color:var(--accent);font-weight:700}
+  footer{margin-top:2.5rem;text-align:center;color:var(--muted);font-size:.8rem;padding:0 1rem}
+  footer p{max-width:40rem;margin:.4rem auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🐞 Good Bug or Bad Bug?</h1>
+    <p class="sub">Found a bug in your garden? Check before you squish. Some of them are on your side. Plain words, no chemicals pushed, 29 common garden insects.</p>
+  </header>
+
+  <div class="modes">
+    <button id="modeBrowse" class="on">Look one up</button>
+    <button id="modeQuiz">Quiz me</button>
+  </div>
+
+  <div id="browse">
+    <div class="controls">
+      <input id="q" type="search" placeholder="Type a bug name… (aphid, ladybug, hornworm)" aria-label="Search bugs">
+      <div class="filters">
+        <button data-f="all" class="on">All</button>
+        <button data-f="good">✅ Good</button>
+        <button data-f="bad">❌ Bad</button>
+        <button data-f="dep">🤔 Depends</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none">No match. Try a shorter word — like “beetle” or “worm”.</div>
+  </div>
+
+  <div id="quiz">
+    <div class="qcard">
+      <div class="em" id="qEm"></div>
+      <h3 id="qName"></h3>
+      <p class="clue" id="qClue"></p>
+      <div class="qbtns">
+        <button class="g" data-a="good">✅ Good</button>
+        <button class="b" data-a="bad">❌ Bad</button>
+        <button class="d" data-a="dep">🤔 Depends</button>
+      </div>
+      <div id="verdict"></div>
+      <button id="nextq">Next bug →</button>
+      <div id="score"></div>
+    </div>
+  </div>
+
+  <div class="linkbox">
+    🌱 Want the free weekly garden letter? It’s short and it’s honest:
+    <a href="https://rootedinthefuture.beehiiv.com" rel="noopener">Rooted in the Future</a>
+  </div>
+
+  <footer>
+    <p><b>What this is:</b> a quick field guide, not a spray guide. We only suggest hands, water, row covers, and planting flowers — the stuff that can’t backfire.</p>
+    <p><b>What this is not:</b> pesticide advice. No product doses here, ever. For sprays, ask your local university extension office — they answer for free.</p>
+    <p>Facts drawn from university extension publications (University of Kentucky Entomology, Penn State Extension).</p>
+  </footer>
+</div>
+
+<script>
+const BUGS = [
+ // GOOD
+ {n:"Ladybug (adult + larva)", em:"🐞", v:"good", id:"Round red or orange beetle with black spots. The larva looks like a tiny black-and-orange alligator — do not squish it!", why:"One ladybug can eat 50+ aphids a day. The larvae eat even more.", act:"Leave them be. Plant dill, yarrow, or alyssum so they stick around."},
+ {n:"Green lacewing", em:"🦋", v:"good", id:"Slim light-green body, big clear lacy wings, long antennae. Larva is called an “aphid lion.”", why:"The larvae are top aphid killers — they also eat mites and small caterpillars.", act:"Leave them. Skip broad sprays, which kill them first."},
+ {n:"Hoverfly", em:"🐝", v:"good", id:"Looks like a small bee but hovers in place like a tiny drone. Only one pair of wings. Cannot sting.", why:"Adults pollinate. The larvae eat aphids by the hundreds.", act:"Leave it. If it hovers, it is almost never a wasp."},
+ {n:"Ground beetle", em:"🪲", v:"good", id:"Shiny dark beetle that runs fast when you lift a rock or board. Mostly out at night.", why:"Eats slugs, cutworms, and root maggots at ground level all night long.", act:"Leave them. A board or stone left in the garden gives them a daytime home."},
+ {n:"Braconid wasp", em:"🤍", v:"good", id:"You mostly see its work: small white cocoons standing on a hornworm’s back like grains of rice.", why:"Those cocoons mean the hornworm is already beaten — and more wasps are coming.", act:"A hornworm with white cocoons? Leave that one alone. It is a wasp factory now."},
+ {n:"Assassin bug", em:"🗡️", v:"good", id:"Long head, thick curved “beak” folded under its chin, slow deliberate walk.", why:"Hunts caterpillars, beetles, and aphids.", act:"Leave it — but don’t handle it. The bite hurts."},
+ {n:"Minute pirate bug", em:"🏴‍☠️", v:"good", id:"Tiny (an eighth of an inch), black with white wing patches.", why:"Eats thrips, spider mites, and insect eggs — pests too small for most helpers.", act:"Leave them. They come with flowering plants."},
+ {n:"Bumblebee & native bees", em:"🐝", v:"good", id:"Fuzzy, loud, busy on flowers. Native bees can be tiny, green, or blue.", why:"No bees, no squash, no tomatoes, no berries. Pollination is the whole game.", act:"Never spray open flowers. Plant more flowers than you think you need."},
+ {n:"Dragonfly", em:"🪁", v:"good", id:"Big eyes, four glass wings, patrols back and forth over the garden.", why:"Eats mosquitoes, gnats, and flies mid-air.", act:"Leave it. A small dish of water nearby helps."},
+ {n:"Garden spider", em:"🕷️", v:"good", id:"Any web-builder in the garden. The big yellow-and-black one is a writing spider.", why:"A web running 24/7 catches more pests than you ever will.", act:"Walk around the web, not through it."},
+ {n:"Tachinid fly", em:"🪰", v:"good", id:"Looks like a chunky, extra-bristly house fly hanging around flowers.", why:"Its young feed on caterpillars, squash bugs, and beetle grubs.", act:"Leave it. Another reason to let some herbs flower."},
+ // BAD
+ {n:"Aphid", em:"🟢", v:"bad", id:"Pinhead-size, green/black/pink, packed in crowds on new stems and leaf backs. Leaves get sticky.", why:"Sucks sap, curls leaves, spreads plant viruses, and multiplies absurdly fast.", act:"Blast them off with a hard hose spray. Repeat every few days. The good bugs on this list handle the rest."},
+ {n:"Tomato hornworm", em:"🐛", v:"bad", id:"Fat green caterpillar, up to 4 inches, white stripes, a soft “horn” on the tail. Strips tomato leaves overnight.", why:"One hornworm can strip a tomato plant to sticks in days.", act:"Hand-pick into soapy water. EXCEPT if it carries white cocoons — then leave it (see braconid wasp)."},
+ {n:"Japanese beetle", em:"✨", v:"bad", id:"Half-inch beetle, metallic green head, copper wings, small white tufts along the sides. Feeds in gangs.", why:"Skeletonizes leaves — eats everything but the veins. The grubs eat your lawn roots too.", act:"Knock them into soapy water in the cool morning when they’re slow. Watch where you put traps — they can pull MORE beetles into a small yard."},
+ {n:"Squash bug", em:"🛡️", v:"bad", id:"Gray-brown shield-shaped bug on squash and pumpkins. Lays neat rows of shiny bronze eggs under leaves.", why:"Sucks sap until leaves wilt, blacken, and die.", act:"Squish the bronze egg rows. Lay a board down — they hide under it at night, so flip and squish each morning."},
+ {n:"Squash vine borer", em:"🥀", v:"bad", id:"You see the damage first: a squash vine wilts fast, with a hole near the base and sawdust-like crumbs.", why:"The larva eats the stem from the inside. The plant dies with a full tank of water.", act:"Cover young plants with row cover until they flower. Bury a stem joint so the vine roots again past the wound."},
+ {n:"Cucumber beetle", em:"🥒", v:"bad", id:"Small yellow beetle with black stripes or black spots, on cucumbers, melons, and squash.", why:"Chews seedlings AND spreads bacterial wilt, which kills the whole vine.", act:"Row covers on young plants until flowering. Hand-pick early and often."},
+ {n:"Cabbage worm", em:"🥬", v:"bad", id:"Velvety green caterpillar on cabbage, broccoli, and kale. The white butterfly fluttering around laid it there.", why:"Chews ragged holes and hides in the heads you were about to eat.", act:"Row covers stop the butterfly cold. Hand-pick what got through. Check leaf backs for yellow bullet-shaped eggs."},
+ {n:"Colorado potato beetle", em:"🥔", v:"bad", id:"Round beetle with tan-and-black stripes on potato plants. Larvae are fat, soft, and brick-red.", why:"Adults and larvae both strip potato leaves fast.", act:"Hand-pick daily and crush the orange egg clusters under leaves. Rotate where you plant potatoes each year."},
+ {n:"Spider mite", em:"🕸️", v:"bad", id:"Too small to see well — look for tiny speckled leaves and fine webbing on leaf backs in hot dry weather.", why:"Thousands of tiny sap bites turn leaves bronze and crisp.", act:"Hard water spray on leaf backs, every few days. They hate wet. Don’t dust-bowl your plants — dusty dry leaves invite them."},
+ {n:"Whitefly", em:"🤧", v:"bad", id:"Shake the plant: a puff of tiny white specks flies up, then lands right back.", why:"Sap-suckers that leave sticky honeydew and invite black mold.", act:"Spray leaf backs with water. Yellow sticky cards catch the adults. Good bugs eat the rest."},
+ {n:"Cutworm", em:"✂️", v:"bad", id:"You find seedlings cut off at the soil line like tiny felled trees. The gray caterpillar curls into a C in the soil nearby.", why:"One cutworm can level a row of transplants in a night.", act:"Collar each seedling — a toilet-paper tube pushed an inch into the soil beats them completely."},
+ {n:"Flea beetle", em:"🦗", v:"bad", id:"Tiny black beetles that jump like fleas when touched. Leaves look shotgun-blasted with pinholes.", why:"Seedlings can’t outgrow a hundred small holes.", act:"Row covers on young plants. Big healthy transplants shrug them off — small seedlings can’t."},
+ {n:"Brown marmorated stink bug", em:"🦨", v:"bad", id:"Shield-shaped, mottled brown, white bands on the antennae. Stinks when crushed.", why:"Stabs fruit and pods, leaving dents, dimples, and cat-face scars.", act:"Knock into soapy water — flick, don’t squeeze. Keep weeds down near the garden."},
+ {n:"Slug & snail", em:"🐌", v:"bad", id:"Slime trails and big smooth holes in leaves, worst after rain and at night.", why:"They mow seedlings and ruin strawberries and greens.", act:"Board trap: lay a wet board down, flip it each morning, collect. Water in the morning, not evening, so nights are dry."},
+ // DEPENDS
+ {n:"Earwig", em:"📎", v:"dep", id:"Brown, fast, with pincers on the tail. Hides in tight damp spots by day.", why:"Eats aphids and insect eggs — but also chews seedlings and soft fruit when there are too many.", act:"A few: leave them. Chewed seedlings: trap them in a rolled damp newspaper at night, shake out in the morning."},
+ {n:"Praying mantis", em:"🙏", v:"dep", id:"Unmistakable: folded “praying” arms, swiveling head that watches you back.", why:"A great hunter that can’t tell friend from foe — it eats bees and butterflies too.", act:"Leave the ones that show up. No need to buy more — store-bought mantises often eat the good bugs first."},
+ {n:"Paper wasp", em:"🐝", v:"dep", id:"Slim wasp with dangling legs in flight. Umbrella-shaped paper nest under eaves.", why:"A real caterpillar hunter and a decent pollinator — but it stings, and it defends its nest.", act:"Nest far from the door? Leave it working for you. Nest over the doorway? That one’s a people problem, not a garden one."},
+ {n:"Ant", em:"🐜", v:"dep", id:"You know ants. In the garden, watch WHERE they’re going.", why:"They loosen soil and clean up scraps — but some ants herd aphids like dairy cows and guard them from ladybugs.", act:"Ants marching up one plant usually means aphids above. Deal with the aphids and the ants leave on their own."}
+];
+
+const grid=document.getElementById('grid'), q=document.getElementById('q'), empty=document.getElementById('empty');
+let filter='all';
+const TAG={good:['good','✅ Good bug'],bad:['bad','❌ Bad bug'],dep:['dep','🤔 It depends']};
+function render(){
+  const term=q.value.trim().toLowerCase();
+  let shown=0;
+  grid.innerHTML=BUGS.filter(b=>(filter==='all'||b.v===filter)&&(!term||(b.n+' '+b.id+' '+b.why).toLowerCase().includes(term)))
+    .map(b=>{shown++;const[t,l]=TAG[b.v];return `<div class="card"><h3><span class="em">${b.em}</span>${b.n}</h3><span class="tag ${t}">${l}</span><p><b>Spot it:</b> ${b.id}</p><p><b>Why:</b> ${b.why}</p><p><b>Do this:</b> ${b.act}</p></div>`}).join('');
+  empty.style.display=shown?'none':'block';
+}
+q.addEventListener('input',render);
+document.querySelectorAll('.filters button').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');filter=btn.dataset.f;render();
+}));
+render();
+
+// quiz
+const browse=document.getElementById('browse'), quiz=document.getElementById('quiz'),
+mB=document.getElementById('modeBrowse'), mQ=document.getElementById('modeQuiz');
+let order=[],idx=0,score=0,asked=0,answered=false;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function ask(){
+  if(idx>=order.length){order=shuffle([...BUGS.keys()]);idx=0}
+  const b=BUGS[order[idx]];answered=false;
+  document.getElementById('qEm').textContent=b.em;
+  document.getElementById('qName').textContent=b.n;
+  document.getElementById('qClue').textContent=b.id;
+  document.getElementById('verdict').innerHTML='';
+  document.getElementById('nextq').style.display='none';
+}
+document.querySelectorAll('.qbtns button').forEach(btn=>btn.addEventListener('click',()=>{
+  if(answered)return;answered=true;asked++;
+  const b=BUGS[order[idx]],ok=btn.dataset.a===b.v;if(ok)score++;
+  const[,label]=TAG[b.v];
+  document.getElementById('verdict').innerHTML=
+    `<span class="${ok?'right':'wrong'}">${ok?'Right!':'Nope —'} ${label}.</span><br>${b.why}<br><i>Do this: ${b.act}</i>`;
+  document.getElementById('score').textContent=`Score: ${score} / ${asked}`;
+  document.getElementById('nextq').style.display='inline-block';
+}));
+document.getElementById('nextq').addEventListener('click',()=>{idx++;ask()});
+function setMode(quizMode){
+  browse.style.display=quizMode?'none':'block';
+  quiz.style.display=quizMode?'block':'none';
+  mB.classList.toggle('on',!quizMode);mQ.classList.toggle('on',quizMode);
+  if(quizMode&&order.length===0){order=shuffle([...BUGS.keys()]);ask()}
+}
+mB.addEventListener('click',()=>setMode(false));
+mQ.addEventListener('click',()=>setMode(true));
+</script>
+</body>
+</html>
